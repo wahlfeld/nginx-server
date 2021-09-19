@@ -89,7 +89,7 @@ resource "aws_spot_instance_request" "nginx" {
   ami                            = data.aws_ami.nginx.id
   instance_type                  = var.instance_type
   ebs_optimized                  = true
-  user_data                      = "${path.module}/local/userdata.sh"
+  user_data                      = file("${path.module}/local/userdata.sh")
   iam_instance_profile           = aws_iam_instance_profile.nginx.name
   vpc_security_group_ids         = [aws_security_group.ingress.id]
   subnet_id                      = aws_subnet.nginx.id

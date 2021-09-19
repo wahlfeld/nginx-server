@@ -7,9 +7,9 @@ repos:
       - id: goimports
       - id: golint
       - id: markdown-link-check
+      - id: shellcheck
       # - id: terraform-validate
       # - id: terragrunt-hclfmt
-      # - id: shellcheck
       # - id: gofmt
       # - id: yapf
       # - id: helmlint
