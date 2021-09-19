@@ -1,4 +1,6 @@
-# devops-take-home-challenge
+# nginx-server
+
+[![build](https://github.com/wahlfeld/nginx-server/actions/workflows/build.yml/badge.svg)](https://github.com/wahlfeld/nginx-server/actions/workflows/build.yml)
 
 ## Requirements
 
@@ -6,6 +8,13 @@
   around)
 * AWS account including CLI configured on your machine
 * Terraform v0.14+
+
+## Install dependencies
+
+Currently this installs more than required to run the code, however doesn't
+include AWS CLI.
+
+`make install`
 
 ## Usage
 
@@ -15,7 +24,7 @@
 4. Create a file called `terraform.tfvars` as per the input descriptions in
    `inputs.tf` E.g.
 ```
-aws_region       = "ap-southeast-2"    // Choose a region closest to your physical location
+aws_region = "ap-southeast-2"     // Choose a region closest to your physical location
 ```
 5. Run `terraform init && terraform apply`
 
@@ -24,12 +33,14 @@ aws_region       = "ap-southeast-2"    // Choose a region closest to your physic
 To view server monitoring metrics visit the `monitoring_url` output from
 Terraform after deploying. 
 
-## Install dependencies
+### Count Words
+`python3 count_words.py --url=<URL>`
 
-Currently this installs more than required to run the code, however doesn't
-include AWS CLI.
-
-`make install`
+e.g. 
+```
+> python3 ./src/count_words.py --url=http://ec2-13-211-160-149.ap-southeast-2.compute.amazonaws.com
+> is
+```
 
 <!-- BEGIN_TF_DOCS -->
 ## Inputs

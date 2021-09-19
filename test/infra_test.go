@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gruntwork-io/terratest/modules/aws"
-	// "github.com/gruntwork-io/terratest/modules/logger"
+	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/retry"
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -22,7 +22,7 @@ import (
 var uniqueID string = strings.ToLower(random.UniqueId())
 var stateBucket string = fmt.Sprintf("%s-terratest-nginx", uniqueID)
 var key string = fmt.Sprintf("%s/terraform.tfstate", uniqueID)
-// var l *logger.Logger
+var l *logger.Logger
 
 func TestTerraform(t *testing.T) {
 	t.Parallel()
@@ -38,9 +38,9 @@ func TestTerraform(t *testing.T) {
 		undeployUsingTerraform(t, workingDir)
 	})
 
-	// defer test_structure.RunTestStage(t, "logs", func() {
-	// 	fetchSyslogForInstance(t, region, workingDir)
-	// })
+	defer test_structure.RunTestStage(t, "logs", func() {
+		fetchSyslogForInstance(t, region, workingDir)
+	})
 
 	test_structure.RunTestStage(t, "create_state_bucket", func() {
 		aws.CreateS3Bucket(t, region, stateBucket)
@@ -81,15 +81,29 @@ func TestTerraform(t *testing.T) {
 
 		monitoringURL := terraform.Output(t, terraformOptions, "monitoring_url")
 
-		validateResponse(t, monitoringURL, 30, 5*time.Second)
+		validateResponse(t, monitoringURL, 5, 5*time.Second)
 	})
 
 	test_structure.RunTestStage(t, "check_docker_service", func() {
 		terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
 
 		instanceID := terraform.Output(t, terraformOptions, "instance_id")
+		timeout := 1 * time.Minute
 
-		checkService(t, region, instanceID, "docker", 1*time.Minute)
+		aws.WaitForSsmInstance(t, region, instanceID, timeout)
+
+		retry.DoWithRetry(t, "Checking if docker service is running", 5, 5*time.Second, func() (string, error) {
+			out, _ := aws.CheckSsmCommandE(t, region, instanceID, "systemctl is-active docker", timeout)
+
+			expectedStatus := "active"
+			actualStatus := strings.TrimSpace(out.Stdout)
+
+			if actualStatus != expectedStatus {
+				return "", fmt.Errorf("Expected status to be '%s' but was '%s'", expectedStatus, actualStatus)
+			}
+
+			return "", nil
+		})
 	})
 
 	test_structure.RunTestStage(t, "check_nginx", func() {
@@ -97,7 +111,7 @@ func TestTerraform(t *testing.T) {
 
 		nginxURL := terraform.Output(t, terraformOptions, "nginx_url")
 
-		validateResponse(t, nginxURL, 10, 5*time.Second)
+		validateResponse(t, nginxURL, 5, 5*time.Second)
 	})
 }
 
@@ -141,28 +155,11 @@ func validateResponse(t *testing.T, address string, maxRetries int, timeBetweenR
 	})
 }
 
-// func fetchSyslogForInstance(t *testing.T, awsRegion string, workingDir string) {
-// 	terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
+func fetchSyslogForInstance(t *testing.T, awsRegion string, workingDir string) {
+	terraformOptions := test_structure.LoadTerraformOptions(t, workingDir)
 
-// 	instanceID := terraform.OutputRequired(t, terraformOptions, "instance_id")
-// 	logs := aws.GetSyslogForInstance(t, instanceID, awsRegion)
+	instanceID := terraform.OutputRequired(t, terraformOptions, "instance_id")
+	logs := aws.GetSyslogForInstance(t, instanceID, awsRegion)
 
-// 	l.Logf(t, "Most recent syslog for Instance %s:\n\n%s\n", instanceID, logs)
-// }
-
-func checkService(t *testing.T, region string, instanceID string, service string, timeout time.Duration) {
-	aws.WaitForSsmInstance(t, region, instanceID, timeout)
-
-	retry.DoWithRetry(t, fmt.Sprintf("Checking if %s service is running", service), 20, 5*time.Second, func() (string, error) {
-		out, _ := aws.CheckSsmCommandE(t, region, instanceID, fmt.Sprintf("systemctl is-active %s", service), timeout)
-
-		expectedStatus := "active"
-		actualStatus := strings.TrimSpace(out.Stdout)
-
-		if actualStatus != expectedStatus {
-			return "", fmt.Errorf("Expected status to be '%s' but was '%s'", expectedStatus, actualStatus)
-		}
-
-		return "", nil
-	})
+	l.Logf(t, "Most recent syslog for Instance %s:\n\n%s\n", instanceID, logs)
 }

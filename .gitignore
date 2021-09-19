@@ -37,6 +37,7 @@ Temporary Items
 ### Terraform ###
 
 *.terraform.lock.hcl
+*.test-data
 
 # Local .terraform directories
 **/.terraform/*

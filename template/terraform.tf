@@ -1,8 +1,10 @@
 terraform {
+  required_version = "~> 0.14.0"
+
   backend "s3" {
-    bucket = "wahlfeldterraform"
-    key    = "nginx-server/prod/terraform.tfstate"
-    region = "ap-southeast-2"
+    # bucket = "CHANGEME"
+    # key    = "nginx-server/prod/terraform.tfstate"
+    # region = "CHANGEME"
   }
 
   required_providers {
