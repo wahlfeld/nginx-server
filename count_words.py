@@ -1,23 +1,12 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3
 
 import requests
-import sys, getopt
 from lxml import html
 from bs4 import BeautifulSoup
 
-def count_words(arg):
-    try:
-        opts, args = getopt.getopt(arg,"hu:",["url="])
-    except getopt.GetoptError:
-      print("count_words.py -u <URL>")
-      sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            print("count_words.py -u <URL>")
-            sys.exit()
-        elif opt in ("-u", "--url"):
-            url = arg
+def count_words():
+    print("What URL do you want to check?")
+    url = input()
 
     resp = requests.get(url)
     html = resp.text
@@ -28,15 +17,17 @@ def count_words(arg):
     text = soup.get_text()
     lines = (line.strip() for line in text.splitlines())
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    cleanText = '\n'.join(chunk for chunk in chunks if chunk)
-    wordList = cleanText.split()
-    wordDict = {}
-    for word in wordList: 
-        wordDict.update({word:wordList.count(word)})
+    clean_text = '\n'.join(chunk for chunk in chunks if chunk)
 
-    sortedWordDict = sorted(wordDict.items(), key=lambda item: item[1], reverse=True)
-    wordOfTheDay = sortedWordDict[0][0]
-    print(wordOfTheDay)
+    word_list = clean_text.split()
+    max = 0
+    max_word = None
+    for word in word_list:
+        if word_list.count(word) > max:
+            max = word_list.count(word)
+            max_word = word
+
+    print(max_word)
 
 if __name__ == "__main__":
-   count_words(sys.argv[1:])
+    count_words()
