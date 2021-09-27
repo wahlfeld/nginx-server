@@ -24,10 +24,8 @@ validate: clean
 		&& terraform init --backend=false && terraform validate
 
 test: clean	
-	cd ${ROOT}/test \
-		&& rm -rf ${ROOT}/test/go.* \
-		&& go mod init test \
-		&& go mod tidy \
+	go mod tidy \
+	&& cd ${ROOT}/test \
 		&& go test -v -timeout 30m
 
 test-no-logs:
