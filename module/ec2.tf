@@ -1,13 +1,10 @@
 #tfsec:ignore:AWS018
 resource "aws_security_group" "ingress" {
   #checkov:skip=CKV2_AWS_5:Broken - https://github.com/bridgecrewio/checkov/issues/1203
-  vpc_id = aws_vpc.nginx.id
-  tags = merge(local.tags,
-    {
-      "Name"        = "${local.name}-ingress"
-      "Description" = "Security group allowing inbound traffic to the nginx server"
-    }
-  )
+  name        = "${local.name}-ingress"
+  description = "Security group allowing inbound traffic to the nginx server"
+  vpc_id      = aws_vpc.nginx.id
+  tags        = local.tags
 }
 
 resource "aws_security_group_rule" "nginx_ingress" {
